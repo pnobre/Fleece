@@ -938,9 +938,14 @@ module SystemTextJson =
         static member inline OfJson (r: 'R, _: Default5) = Result.bindError (Error << DecodeError.Uncategorized) << (^R : (static member FromJSON: ^R  -> (JsonValue -> Result< ^R, string>)) r) : JsonValue ->  ^R ParseResult
         static member inline OfJson (_: 'R, _: Default4) = fun js -> Result.bindError (Error << DecodeError.Uncategorized) (^R : (static member OfJson: JsonValue -> Result< ^R, string>) js) : ^R ParseResult
         static member inline OfJson (r: 'R, _: Default3) = (^R : (static member FromJSON: ^R  -> (JsonValue -> ^R ParseResult)) r) : JsonValue ->  ^R ParseResult
-        static member inline OfJson (_: 'R, _: Default2) = fun js -> (^R : (static member OfJson: JsonValue -> ^R ParseResult) js) : ^R ParseResult
-
-        static member OfJson (_: JsonObject, _: Default1) = JsonHelpers.jsonObjectOfJson
+        static member inline OfJson (_: 'R, _: Default2) =
+            fun js ->
+                match js with
+                | JObject _ -> (^R : (static member OfJson: JsonValue -> ^R ParseResult) js) : ^R ParseResult
+                | JNull -> Ok Unchecked.defaultof<'R>
+                | x -> Decode.Fail.objExpected x
+                
+        static member OfJson (_: JsonObject, _: Default1) =JsonHelpers.jsonObjectOfJson
         static member OfJson (_: JsonValue, _: Default1) = Success
 
 
